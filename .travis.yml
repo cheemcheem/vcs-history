@@ -1,0 +1,51 @@
+language: java
+
+sudo: required
+
+install: true
+
+branches:
+  only:
+    - master
+    - develop
+
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      env:
+        - JAVA_HOME="/home/travis/openjdk12"
+        - PATH="/home/travis/openjdk12/bin:${PATH}"
+
+env:
+  - CI=true
+
+before_install:
+  - echo -e "Installing openjdk12 (manually)"
+  - chmod +x ./install-jdk.sh
+  - ./install-jdk.sh --target "/home/travis/openjdk12" --workspace "/home/travis/.cache/install-jdk" --feature "12" --license "GPL" --cacerts
+  - export JAVA_HOME="/home/travis/openjdk12"
+  - export PATH=${JAVA_HOME}/bin:$PATH
+  - chmod +x ./travis_install.sh
+  - ./travis_install.sh
+
+script:
+  - export GRADLE_HOME=/opt/gradle/gradle-5.0
+  - export PATH=${GRADLE_HOME}/bin:${PATH}
+  - gradle -Dorg.gradle.java.home=$JAVA_HOME clean build test
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -f  $HOME/.gradle/caches/*/fileHashes/fileHashes.bin
+  - rm -f  $HOME/.gradle/caches/*/fileHashes/fileHashes.lock
+
+git:
+  depth: false
+
+cache:
+  directories:
+    - /opt/gradle/gradle-5.0
+    - $HOME/.gradle/caches/modules-2/
+    - $HOME/.gradle/wrapper/dists/
+    - $HOME/.m2
