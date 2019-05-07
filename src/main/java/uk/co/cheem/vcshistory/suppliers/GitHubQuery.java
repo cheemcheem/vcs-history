@@ -1,81 +1,117 @@
 package uk.co.cheem.vcshistory.suppliers;
 
-import io.aexp.nodes.graphql.Argument;
-import io.aexp.nodes.graphql.Arguments;
-import io.aexp.nodes.graphql.GraphQLRequestEntity;
-import io.aexp.nodes.graphql.GraphQLRequestEntity.RequestBuilder;
-import io.aexp.nodes.graphql.GraphQLResponseEntity;
-import io.aexp.nodes.graphql.GraphQLTemplate;
-import io.aexp.nodes.graphql.GraphQLTemplate.GraphQLMethod;
-import java.util.Map;
-import lombok.AccessLevel;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import uk.co.cheem.vcshistory.config.GitHubConfig;
 import uk.co.cheem.vcshistory.vcsobjects.Repository;
+import uk.co.cheem.vcshistory.vcsobjects.Response;
 
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@Slf4j
 @RequiredArgsConstructor
-public
-class GitHubQuery {
+@Slf4j
+public class GitHubQuery {
 
-  final @NonNull GitHubConfig configuration;
+  private final GitHubConfig configuration;
+  private HttpRequest httpRequest;
+  private @Getter
+  Repository repository;
+  private HttpResponse<String> response;
 
-  @Getter GraphQLResponseEntity<Repository> response;
-  RequestBuilder requestBuilder;
+  public void makeRequest() {
+    try {
+      val query = getQuery();
+      val authorization = "token " + this.configuration.getToken();
+      httpRequest = HttpRequest
+          .newBuilder(URI.create("https://api.github.com/graphql"))
+          .POST(BodyPublishers.ofString(query))
+          .header("Authorization", authorization)
+          .build();
+    } catch (RuntimeException e) {
+      throw new QueryException("Failed to create the request.", e);
+    }
+  }
 
-  public void buildQuery() {
-    log.info("Setting up GraphQL Query with configuration.");
+  public void sendRequest() {
+    val httpClient = HttpClient.newHttpClient();
+    try {
+      response = httpClient.send(httpRequest, BodyHandlers.ofString());
+      log.debug(response.body());
 
-    this.requestBuilder = GraphQLRequestEntity.Builder();
-    addURL();
-    addArguments();
-    addAuthorization();
-    requestBuilder.requestMethod(GraphQLMethod.QUERY).request(Repository.class);
+    } catch (IOException | InterruptedException e) {
+      throw new QueryException("Failed to send the request.", e);
+    }
+  }
 
-    log.info("GraphQL Query set up.");
+  public void parseResponse() {
+    try {
+      val parsedResponse = new ObjectMapper().readValue(response.body(), Response.class);
+      repository = parsedResponse.getData().getRepository();
+    } catch (IOException e) {
+      throw new QueryException("Failed to parse response.", e);
+    }
+
+    log.debug("Repository details in response: " + repository.toString());
 
   }
 
-  private void addAuthorization() {
-    final var authorizationHeader = Map.of("Authorization", "bearer " + configuration.getToken());
-    requestBuilder.headers(authorizationHeader);
+  private String getQuery() {
+    val ownerName = this.configuration.getOwnerName();
+    val repoName = this.configuration.getRepoName();
+    return "{\"query\": \""
+        + "query {\\n"
+        + "    repository(owner: \\\"" + ownerName + "\\\", name: \\\"" + repoName + "\\\") {\\n"
+        + "      refs(first: 10, refPrefix:\\\"refs/heads/\\\") {\\n"
+        + "        nodes {\\n"
+        + "          name\\n"
+        + "          target {\\n"
+        + "          ... on Commit {\\n"
+        + "            id\\n"
+        + "            history(first: 99) {\\n"
+        + "              pageInfo {\\n"
+        + "                hasNextPage\\n"
+        + "              }\\n"
+        + "              edges {\\n"
+        + "                node {\\n"
+        + "                  parents(first: 1) {\\n"
+        + "                    nodes {\\n"
+        + "                      oid\\n"
+        + "                    }\\n"
+        + "                  }\\n"
+        + "                  messageHeadline\\n"
+        + "                  oid\\n"
+        + "                  message\\n"
+        + "                  author {\\n"
+        + "                    name\\n"
+        + "                    email\\n"
+        + "                    date\\n"
+        + "                  }\\n"
+        + "                }\\n"
+        + "              }\\n"
+        + "            }\\n"
+        + "          }\\n"
+        + "        }\\n"
+        + "        }\\n"
+        + "      }\\n"
+        + "    }\\n"
+        + "  }\\n\""
+        + "}";
   }
 
-  private void addArguments() {
-    val name = configuration.getRepoName();
-    val owner = configuration.getOwnerName();
+  public static class QueryException extends RuntimeException {
 
-    requestBuilder.arguments(
-        new Arguments(
-            "repository",
-            new Argument<>("name", name),
-            new Argument<>("owner", owner)
-        )
-    );
-  }
-
-  @SneakyThrows
-  private void addURL() {
-    val url = "https://api.github.com/graphql";
-    requestBuilder.url(url);
-  }
-
-  public void sendQuery() {
-    val graphQLTemplate = new GraphQLTemplate();
-
-    log.info("Sending GraphQL query.");
-    this.response = graphQLTemplate.query(requestBuilder.build(), Repository.class);
-    log.info("Received GraphQL response.");
+    private QueryException(String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 
 
 }
-
-

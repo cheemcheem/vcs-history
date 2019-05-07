@@ -30,8 +30,8 @@ dependencies {
     compileOnly group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
     annotationProcessor group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
 
-    // GraphQL
-    implementation group: 'io.aexp.nodes.graphql', name: 'nodes', version: '0.4.0'
+    // Jackson
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
 
     // GraphStream
     implementation group: 'org.graphstream', name: 'gs-core', version: "${graphStreamVersion}"

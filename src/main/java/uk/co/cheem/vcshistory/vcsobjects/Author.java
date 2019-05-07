@@ -1,9 +1,12 @@
 package uk.co.cheem.vcshistory.vcsobjects;
 
+import java.util.Date;
 import lombok.Data;
 
 @Data
-public class Ref {
+public class Author {
+
   private String name;
-  private Commit target;
+  private String email;
+  private Date date;
 }

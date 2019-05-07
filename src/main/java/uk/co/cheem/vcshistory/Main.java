@@ -1,12 +1,11 @@
 package uk.co.cheem.vcshistory;
 
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.cli.ParseException;
 import uk.co.cheem.vcshistory.config.GitHubConfig;
 import uk.co.cheem.vcshistory.config.GitHubConfigParser;
-import uk.co.cheem.vcshistory.suppliers.GitHubQuery;
-import uk.co.cheem.vcshistory.view.GraphOutput;
+import uk.co.cheem.vcshistory.controller.ControllerFactory;
 
 @Slf4j
 public class Main {
@@ -22,35 +21,13 @@ public class Main {
       System.exit(1);
       return;
     }
-    log.debug(configuration.toString());
+    log.debug("Configuration: " + configuration.toString());
 
-    // Make and send GraphQL Query
-    final var gitHubSupplier = new GitHubQuery(configuration);
-    gitHubSupplier.buildQuery();
-    gitHubSupplier.sendQuery();
-    final var response = gitHubSupplier.getResponse();
-    log.debug("GraphQL response: " + response.toString());
-
-    // Handle errors in the GraphQL communication
-    if (response.getErrors() != null && response.getErrors().length != 0) {
-      if (response.getErrors().length == 1) {
-        log.error(
-            "GraphQL error communicating with GitHub. " + response.getErrors()[0].getMessage()
-        );
-      } else {
-        log.error(
-            "GraphQL error communicating with GitHub. " + System.lineSeparator()
-                + Arrays.toString(response.getErrors())
-        );
-      }
-      log.error(
-          "Try checking configuration was correctly parsed: '" + configuration.toString() + "'.");
+    val controller = ControllerFactory.fromConfig(configuration);
+    controller.start();
+    if (controller.isFailed()) {
       System.exit(1);
-      return;
     }
-
-    new GraphOutput(response.getResponse()).display();
-
   }
 
 }
