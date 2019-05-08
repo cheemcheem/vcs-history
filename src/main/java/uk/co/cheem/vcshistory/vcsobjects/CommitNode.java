@@ -2,6 +2,9 @@ package uk.co.cheem.vcshistory.vcsobjects;
 
 import lombok.Data;
 
+/**
+ * The type Commit node.
+ */
 @Data
 public class CommitNode {
 

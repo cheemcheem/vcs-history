@@ -12,26 +12,32 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import uk.co.cheem.vcshistory.config.GitHubConfig;
+import uk.co.cheem.vcshistory.config.Config;
 import uk.co.cheem.vcshistory.vcsobjects.Repository;
 import uk.co.cheem.vcshistory.vcsobjects.Response;
 
+/**
+ * The type Git hub query.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class GitHubQuery {
 
-  private final GitHubConfig configuration;
+  private final Config configuration;
   private HttpRequest httpRequest;
   private @Getter
   Repository repository;
   private HttpResponse<String> response;
 
+  /**
+   * Make request.
+   */
   public void makeRequest() {
     try {
       val query = getQuery();
       val authorization = "token " + this.configuration.getToken();
       httpRequest = HttpRequest
-          .newBuilder(URI.create("https://api.github.com/graphql"))
+          .newBuilder(URI.create(configuration.getUrl()))
           .POST(BodyPublishers.ofString(query))
           .header("Authorization", authorization)
           .build();
@@ -40,6 +46,9 @@ public class GitHubQuery {
     }
   }
 
+  /**
+   * Send request.
+   */
   public void sendRequest() {
     val httpClient = HttpClient.newHttpClient();
     try {
@@ -51,6 +60,9 @@ public class GitHubQuery {
     }
   }
 
+  /**
+   * Parse response.
+   */
   public void parseResponse() {
     try {
       val parsedResponse = new ObjectMapper().readValue(response.body(), Response.class);
@@ -69,19 +81,19 @@ public class GitHubQuery {
     return "{\"query\": \""
         + "query {\\n"
         + "    repository(owner: \\\"" + ownerName + "\\\", name: \\\"" + repoName + "\\\") {\\n"
-        + "      refs(first: 10, refPrefix:\\\"refs/heads/\\\") {\\n"
+        + "      refs(first: 100, refPrefix:\\\"refs/heads/\\\") {\\n"
         + "        nodes {\\n"
         + "          name\\n"
         + "          target {\\n"
         + "          ... on Commit {\\n"
         + "            id\\n"
-        + "            history(first: 99) {\\n"
+        + "            history {\\n"
         + "              pageInfo {\\n"
         + "                hasNextPage\\n"
         + "              }\\n"
         + "              edges {\\n"
         + "                node {\\n"
-        + "                  parents(first: 1) {\\n"
+        + "                  parents(first: 10) {\\n"
         + "                    nodes {\\n"
         + "                      oid\\n"
         + "                    }\\n"
@@ -106,6 +118,9 @@ public class GitHubQuery {
         + "}";
   }
 
+  /**
+   * The type Query exception.
+   */
   public static class QueryException extends RuntimeException {
 
     private QueryException(String message, Throwable cause) {

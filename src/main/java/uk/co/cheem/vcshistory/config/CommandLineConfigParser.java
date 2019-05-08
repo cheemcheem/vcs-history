@@ -8,9 +8,12 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+/**
+ * The type Command line config parser.
+ */
 @Slf4j
 @Value
-public class GitHubConfigParser {
+public class CommandLineConfigParser {
 
   String[] args;
   private static final Options options = new Options();
@@ -22,7 +25,13 @@ public class GitHubConfigParser {
     options.addRequiredOption("r", "repo", true, "GitHub repo name.");
   }
 
-  public GitHubConfig createConfiguration() throws ParseException {
+  /**
+   * Create configuration config.
+   *
+   * @return the config
+   * @throws ParseException the parse exception
+   */
+  public Config createConfiguration() throws ParseException {
     log.info("Creating configuration from command line arguments..");
     val commandLine = parser.parse(options, args);
 

@@ -2,17 +2,20 @@ package uk.co.cheem.vcshistory.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import uk.co.cheem.vcshistory.config.GitHubConfig;
+import uk.co.cheem.vcshistory.config.Config;
 import uk.co.cheem.vcshistory.suppliers.GitHubQuery;
 import uk.co.cheem.vcshistory.suppliers.GitHubQuery.QueryException;
 import uk.co.cheem.vcshistory.vcsobjects.Repository;
 import uk.co.cheem.vcshistory.view.GraphOutput;
 
+/**
+ * The type Graph ql controller.
+ */
 @RequiredArgsConstructor
 @Slf4j
-class GraphQLController extends Controller {
+class GitHubQueryController extends QueryController {
 
-  private final GitHubConfig configuration;
+  private final Config configuration;
   private Repository repository;
 
   @Override

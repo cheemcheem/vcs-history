@@ -4,13 +4,22 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * The type QueryController.
+ */
 @Slf4j
 @RequiredArgsConstructor
-public abstract class Controller {
+public abstract class QueryController {
 
+  /**
+   * The Failed.
+   */
   @Getter
   protected boolean failed;
 
+  /**
+   * Start.
+   */
   public void start() {
     log.info("Sending request.");
     this.query();
@@ -22,7 +31,13 @@ public abstract class Controller {
     this.displayOutput();
   }
 
+  /**
+   * Query.
+   */
   protected abstract void query();
 
+  /**
+   * Display output.
+   */
   protected abstract void displayOutput();
 }
