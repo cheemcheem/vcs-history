@@ -7,9 +7,17 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 
+/**
+ * The type Graph frame.
+ */
 @Slf4j
 class GraphFrame extends JFrame {
 
+  /**
+   * Instantiates a new Graph frame.
+   *
+   * @throws HeadlessException the headless exception
+   */
   GraphFrame() throws HeadlessException {
     super("VCS History");
     setUp();

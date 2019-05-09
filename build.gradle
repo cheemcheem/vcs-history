@@ -36,6 +36,7 @@ dependencies {
     // GraphStream
     implementation group: 'org.graphstream', name: 'gs-core', version: "${graphStreamVersion}"
     implementation group: 'org.graphstream', name: 'gs-algo', version: "${graphStreamVersion}"
+    implementation group: 'org.graphstream', name: 'gs-ui', version: "${graphStreamVersion}"
 
     // Arguments
     implementation group: 'commons-cli', name: 'commons-cli', version: "${commonsCliVersion}"
