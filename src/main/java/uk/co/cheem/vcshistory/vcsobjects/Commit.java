@@ -1,12 +1,17 @@
 package uk.co.cheem.vcshistory.vcsobjects;
 
-import io.aexp.nodes.graphql.annotations.GraphQLArgument;
+import java.util.List;
 import lombok.Data;
 
+/**
+ * The type Commit.
+ */
 @Data
 public class Commit {
+
   private String id;
 
-  @GraphQLArgument(name = "first", value = "10", type = "Integer")
   private CommitHistoryConnection history;
+
+  private List<CommitEdge> edges;
 }

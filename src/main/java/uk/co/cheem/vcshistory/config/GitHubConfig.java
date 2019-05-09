@@ -4,9 +4,14 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * The type Git hub config.
+ */
 @Builder
 @Value
-public class GitHubConfig {
+class GitHubConfig implements Config {
+
+  private final String url = "https://api.github.com/graphql";
   @NonNull String ownerName;
   @NonNull String repoName;
   @NonNull String token;

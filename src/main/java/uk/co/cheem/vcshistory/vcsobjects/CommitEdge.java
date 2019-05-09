@@ -2,11 +2,12 @@ package uk.co.cheem.vcshistory.vcsobjects;
 
 import lombok.Data;
 
+
 /**
- * The type Page info.
+ * The type Commit edge.
  */
 @Data
-public class PageInfo {
+public class CommitEdge {
 
-  private boolean hasNextPage;
+  private CommitNode node;
 }

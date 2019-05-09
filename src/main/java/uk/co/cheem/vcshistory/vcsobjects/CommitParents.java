@@ -4,10 +4,10 @@ import java.util.List;
 import lombok.Data;
 
 /**
- * The type Ref connection.
+ * The type Commit parents.
  */
 @Data
-public class RefConnection {
+public class CommitParents {
 
-  private List<Ref> nodes;
+  private List<CommitParentNode> nodes;
 }

@@ -1,20 +1,27 @@
 package uk.co.cheem.vcshistory;
 
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.cli.ParseException;
-import uk.co.cheem.vcshistory.config.GitHubConfig;
-import uk.co.cheem.vcshistory.config.GitHubConfigParser;
-import uk.co.cheem.vcshistory.suppliers.GitHubQuery;
-import uk.co.cheem.vcshistory.view.GraphOutput;
+import uk.co.cheem.vcshistory.config.CommandLineConfigParser;
+import uk.co.cheem.vcshistory.config.Config;
+import uk.co.cheem.vcshistory.controller.QueryControllerFactory;
 
+/**
+ * The type Main.
+ */
 @Slf4j
 public class Main {
 
+  /**
+   * The entry point of application.
+   *
+   * @param args the input arguments
+   */
   public static void main(String[] args) {
     // Parse arguments into a configuration object
-    final var commandLineOptionParser = new GitHubConfigParser(args);
-    final GitHubConfig configuration;
+    final var commandLineOptionParser = new CommandLineConfigParser(args);
+    final Config configuration;
     try {
       configuration = commandLineOptionParser.createConfiguration();
     } catch (ParseException e) {
@@ -22,35 +29,13 @@ public class Main {
       System.exit(1);
       return;
     }
-    log.debug(configuration.toString());
+    log.debug("Configuration: " + configuration.toString());
 
-    // Make and send GraphQL Query
-    final var gitHubSupplier = new GitHubQuery(configuration);
-    gitHubSupplier.buildQuery();
-    gitHubSupplier.sendQuery();
-    final var response = gitHubSupplier.getResponse();
-    log.debug("GraphQL response: " + response.toString());
-
-    // Handle errors in the GraphQL communication
-    if (response.getErrors() != null && response.getErrors().length != 0) {
-      if (response.getErrors().length == 1) {
-        log.error(
-            "GraphQL error communicating with GitHub. " + response.getErrors()[0].getMessage()
-        );
-      } else {
-        log.error(
-            "GraphQL error communicating with GitHub. " + System.lineSeparator()
-                + Arrays.toString(response.getErrors())
-        );
-      }
-      log.error(
-          "Try checking configuration was correctly parsed: '" + configuration.toString() + "'.");
+    val controller = QueryControllerFactory.fromConfig(configuration);
+    controller.start();
+    if (controller.isFailed()) {
       System.exit(1);
-      return;
     }
-
-    new GraphOutput(response.getResponse()).display();
-
   }
 
 }
