@@ -112,8 +112,8 @@ public class CommitViewNode {
           .filter(n -> n.getOid().equals(next.getOid()))
           .collect(Collectors.toList());
       for (CommitViewNode duplicate : duplicates) {
-        if (next.getBranchPrecedence() > duplicate.getBranchPrecedence()) {
-          iterator.remove();
+        if (next.getBranchPrecedence() < duplicate.getBranchPrecedence()) {
+//          iterator.remove();
           break;
         }
       }

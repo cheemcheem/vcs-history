@@ -1,17 +1,20 @@
 package uk.co.cheem.vcshistory.view;
 
+import java.awt.Desktop;
 import java.awt.HeadlessException;
 import java.awt.Taskbar;
 import java.util.Objects;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.graphstream.algorithm.Toolkit;
+import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
-import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.graph.implementations.DefaultGraph;
 import org.graphstream.ui.view.Viewer;
 import org.graphstream.ui.view.Viewer.ThreadingModel;
 import uk.co.cheem.vcshistory.vcsobjects.Repository;
@@ -27,7 +30,7 @@ public class GraphOutput {
   private final Repository repository;
   @Getter
   private boolean failed;
-  private MultiGraph graph;
+  private Graph graph;
   private GraphFrame frame;
 
   /**
@@ -66,7 +69,7 @@ public class GraphOutput {
 
     val y = parentGraphNode == null ? 0 : Toolkit.nodePosition(parentGraphNode)[1] - 10;
     graphNode.addAttribute("y", y);
-    graphNode.addAttribute("x", -200 + node.getBranchPrecedence() * 2);
+    graphNode.addAttribute("x", -200 + node.getBranchPrecedence() * 10);
 
     if (parentGraphNode == null || !parentGraphNode.getId().endsWith(node.getBranchName())) {
       graphNode.addAttribute("label", node.getBranchName() + " " + node.getOid().substring(0, 6));
@@ -89,9 +92,10 @@ public class GraphOutput {
   }
 
   private void setUpView() {
+
     System.setProperty("org.graphstream.ui.renderer",
         "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
-    graph = new MultiGraph("VCS");
+    graph = new DefaultGraph("VCS");
     val viewer = new Viewer(graph, ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
     viewer.disableAutoLayout();
     val view = viewer.addDefaultView(false);
@@ -99,9 +103,26 @@ public class GraphOutput {
     final var resource = ClassLoader.getSystemClassLoader().getResource("icon.png");
     val imageIcon = new ImageIcon(Objects.requireNonNull(resource));
     Taskbar.getTaskbar().setIconImage(imageIcon.getImage());
+    Desktop desktop = Desktop.getDesktop();
+
+    desktop.setAboutHandler(e ->
+        JOptionPane.showMessageDialog(null, "About dialog", "About VCS History",
+            JOptionPane.INFORMATION_MESSAGE)
+    );
+    desktop.setPreferencesHandler(e ->
+        JOptionPane.showMessageDialog(null, "Preferences dialog", "VSC History Preferences",
+            JOptionPane.INFORMATION_MESSAGE)
+    );
+    desktop.setQuitHandler((e, r) -> {
+          r.cancelQuit();
+          JOptionPane.showMessageDialog(null, "Quit dialog", "VSC History Preferences",
+              JOptionPane.QUESTION_MESSAGE);
+//          System.exit(0);
+        }
+    );
 
     try {
-      frame = new GraphFrame();
+      frame = new GraphFrame(view);
     } catch (HeadlessException e) {
       log.error("Unable to create window. Try running with a head.");
       log.debug("Headless Exception when creating window.", e);
